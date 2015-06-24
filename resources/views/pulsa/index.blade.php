@@ -15,8 +15,11 @@
 	<br />
 	<form action="/inquiry" method="post">
 		<input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
+		<input type="hidden" name="server_trxid" value="{{$respon['server_trxid']}}">
 		<input type="submit" value="Inquiry">
 	</form>
+	<br />
+	<a href="/">Index</a>
 
 	<!--/*{!! Form::open(array('route' => 'topup', 'method' => 'post')) !!}
 		<div class="form-group">
@@ -56,7 +59,14 @@
 	{!! Form::close() !!}*/-->
 
 	<div style="width:50%">
-		<p id="response-div">{{$respon}}</p>
+		<p id="response-div">{{$respon['rescode']}}</p>
+		<p id="response-div">{{$respon['hp']}}</p>
+		<p id="response-div">{{$respon['vtype']}}</p>
+		<p id="response-div">{{$respon['server_trxid']}}</p>
+		<p id="response-div">{{$respon['partner_trxid']}}</p>
+		<p id="response-div">{{$respon['scrmessage']}}</p>
+		<p id="response-div">{{$respon['resmessage']}}</p>
+		<p id="response-div">{{$respon['sn']}}</p>
 	</div>
 
 	<div style="width:50%">

@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 
 class PulsaController extends Controller
 {
-    private $server_trxid = "";
 
     /**
      * Display a listing of the resource.
@@ -21,7 +20,14 @@ class PulsaController extends Controller
     {
         // phpinfo();
         $data = array();
-        $data['respon'] = "";
+        $data['respon']['rescode'] = "";
+        $data['respon']['hp'] = "";
+        $data['respon']['vtype'] = "";
+        $data['respon']['server_trxid'] = "";
+        $data['respon']['partner_trxid'] = "";
+        $data['respon']['scrmessage'] = "";
+        $data['respon']['resmessage'] = "";
+        $data['respon']['sn'] = "";
         $data['error'] = "";
         return view('pulsa.index', $data);
     }
@@ -39,15 +45,20 @@ class PulsaController extends Controller
         $url = 'http://183.91.68.19:7357/h2h.php?';
         $channelID = "kaskustest";
         $storeID = "test01";
-        $posID = "";
+        $posID = "1";
         $channelPIN = "1234";
-        $cashierID = "";
+        $cashierID = "1";
         $serverSecretKey = "777888";
         $serverTrxID = "";
-        $partnerTrxID = "";
-        $lock = $channelID + $storeID;
+        $partnerTrxID = "123456";
+        $lock = $channelID . $storeID . $posID;
         $date = date('YmdHis');
-        $signature = md5(md5($channelPIN + $serverSecretKey + $partnerTrxID) + md5($lock + $date));
+        // $date = "20150616061436";
+        $param1 = $channelPIN . $serverSecretKey . $serverTrxID . $partnerTrxID;
+        $param2 = $lock . $date;
+        $md1 = md5($param1);
+        $md2 = md5($param2);
+        $signature = md5($md1 . $md2);
 
         $phone =  $input['nohp']; //$request->input('nohp');
         $vType = $input['nominal']; //$request->input('nominal');
@@ -63,17 +74,22 @@ class PulsaController extends Controller
                     . "&storeid=" . $storeID
                     . "&cashierid=" . $cashierID;
 
+        // die(var_dump($param1) . " " . var_dump($param2) . " " . var_dump($md1) . " " . var_dump($md2) . " " . var_dump($signature) . " ". var_dump($queryURL));
+
+        print_r($queryURL);
         $ch = curl_init();
  
         curl_setopt($ch, CURLOPT_URL, $queryURL);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,300); 
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+
+        set_time_limit(605);
          
         $output = curl_exec($ch);
          
-        curl_close($ch);
-
-        $data['respon'] = $output;
+        //$data['respon'] = $xml;
         if ($output === FALSE)
         {
             $data['error'] = curl_error($ch);
@@ -81,46 +97,81 @@ class PulsaController extends Controller
         else 
         {
             $data['error'] = "";
+
+            libxml_use_internal_errors(true);
+
+            $xml = simplexml_load_string($output);
+            if ($xml === false) {
+                echo "Failed loading XML: ";
+                foreach(libxml_get_errors() as $error) {
+                    echo "<br>", $error->message;
+                }
+            }
+        print_r($output);
+
+            $data['respon']['rescode'] = $xml->rescode;
+            $data['respon']['hp'] = $xml->hp;
+            $data['respon']['vtype'] = $xml->vtype;
+            $data['respon']['server_trxid'] = $xml->server_trxid;
+            $data['respon']['partner_trxid'] = $xml->partner_trxid;
+            $data['respon']['scrmessage'] = $xml->scrmessage;
+            $data['respon']['resmessage'] = "";
+            $data['respon']['sn'] = "";
         }
+
+        curl_close($ch);
         return view('pulsa.index', $data);
     }
 
     public function inquiry()
     {
+        $input = Input::all();
         $data = array();
-        $data['respon'] = "";
 
         $url = 'http://183.91.68.19:7357/h2h.php?';
         $channelID = "kaskustest";
         $storeID = "test01";
-        $posID = "";
+        $posID = "1";
         $channelPIN = "1234";
-        $cashierID = "";
+        $cashierID = "1";
         $serverSecretKey = "777888";
-        $serverTrxID = "";
-        $partnerTrxID = "";
-        $lock = $channelID + $storeID;
+        $serverTrxID = $input['server_trxid'];
+        $partnerTrxID = "123456";
+        $lock = $channelID . $storeID . $posID;
         $date = date('YmdHis');
-        $signature = md5(md5($channelPIN + $serverSecretKey + $partnerTrxID) + md5($lock + $date));
+        // $date = "20150616061436";
+        $param1 = $channelPIN . $serverSecretKey . $serverTrxID . $partnerTrxID;
+        $param2 = $lock . $date;
+        $md1 = md5($param1);
+        $md2 = md5($param2);
+        $signature = md5($md1 . $md2);
+
+//        die(var_dump($param1) . " " . var_dump($param2) . " " . var_dump($md1) . " " . var_dump($md2) . " " . var_dump($signature));
 
         $queryURL = $url 
                     . "channelid=" . $channelID 
                     . "&posid=" . $posID 
                     . "&password=" . $signature 
                     . "&cmd=inquiry&trxtime=" . $date
-                    . "&server_trxid=" . $this->server_trxid
+                    . "&server_trxid=" . $serverTrxID
                     . "&storeid=" . $storeID
                     . "&cashierid=" . $cashierID;
+
+        // die(var_dump($queryURL));
 
         $ch = curl_init();
  
         curl_setopt($ch, CURLOPT_URL, $queryURL);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,300); 
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+
+        set_time_limit(605);
          
         $output = curl_exec($ch);
-         
-        curl_close($ch);
+        
+
 
         if ($output === FALSE)
         {
@@ -128,8 +179,30 @@ class PulsaController extends Controller
         }
         else 
         {
-            $data['error'] = "";
+            $data['error'] = "";libxml_use_internal_errors(true);
+
+            $xml = simplexml_load_string($output);
+            if ($xml === false) {
+                echo "Failed loading XML: ";
+                foreach(libxml_get_errors() as $error) {
+                    echo "<br>", $error->message;
+                }
+            }
+
+            print_r($xml);
+
+            $this->server_trxid = $xml->server_trxid;
+
+            $data['respon']['rescode'] = $xml->rescode;
+            $data['respon']['hp'] = $xml->hp;
+            $data['respon']['vtype'] = $xml->vtype;
+            $data['respon']['server_trxid'] = $xml->server_trxid;
+            $data['respon']['partner_trxid'] = $xml->partner_trxid;
+            $data['respon']['scrmessage'] = $xml->scrmessage;
+            $data['respon']['resmessage'] = $xml->resmessage;
+            $data['respon']['sn'] = $xml->sn;
         }
+        curl_close($ch);
         return view('pulsa.index', $data);
     }
 
