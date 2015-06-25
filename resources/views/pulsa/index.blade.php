@@ -16,10 +16,10 @@
 	<form action="/inquiry" method="post">
 		<input type="hidden" name="_token" value="<?php echo csrf_token(); ?>">
 		<input type="hidden" name="server_trxid" value="{{$respon['server_trxid']}}">
+		<input type="hidden" name="partner_trxid" value="{{$respon['partner_trxid']}}">
 		<input type="submit" value="Inquiry">
 	</form>
 	<br />
-	<a href="/">Index</a>
 
 	<!--/*{!! Form::open(array('route' => 'topup', 'method' => 'post')) !!}
 		<div class="form-group">

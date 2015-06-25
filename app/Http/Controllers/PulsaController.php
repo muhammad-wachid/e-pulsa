@@ -11,6 +11,18 @@ use App\Http\Controllers\Controller;
 class PulsaController extends Controller
 {
 
+    function generateRandomString($length = 10) 
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) 
+        {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -50,18 +62,17 @@ class PulsaController extends Controller
         $cashierID = "1";
         $serverSecretKey = "777888";
         $serverTrxID = "";
-        $partnerTrxID = "123456";
+        $partnerTrxID = $this->generateRandomString();
         $lock = $channelID . $storeID . $posID;
         $date = date('YmdHis');
-        // $date = "20150616061436";
         $param1 = $channelPIN . $serverSecretKey . $serverTrxID . $partnerTrxID;
         $param2 = $lock . $date;
         $md1 = md5($param1);
         $md2 = md5($param2);
         $signature = md5($md1 . $md2);
 
-        $phone =  $input['nohp']; //$request->input('nohp');
-        $vType = $input['nominal']; //$request->input('nominal');
+        $phone =  $input['nohp'];
+        $vType = $input['nominal'];
 
         $queryURL = $url 
                     . "channelid=" . $channelID 
@@ -74,9 +85,6 @@ class PulsaController extends Controller
                     . "&storeid=" . $storeID
                     . "&cashierid=" . $cashierID;
 
-        // die(var_dump($param1) . " " . var_dump($param2) . " " . var_dump($md1) . " " . var_dump($md2) . " " . var_dump($signature) . " ". var_dump($queryURL));
-
-        print_r($queryURL);
         $ch = curl_init();
  
         curl_setopt($ch, CURLOPT_URL, $queryURL);
@@ -89,7 +97,6 @@ class PulsaController extends Controller
          
         $output = curl_exec($ch);
          
-        //$data['respon'] = $xml;
         if ($output === FALSE)
         {
             $data['error'] = curl_error($ch);
@@ -107,7 +114,6 @@ class PulsaController extends Controller
                     echo "<br>", $error->message;
                 }
             }
-        print_r($output);
 
             $data['respon']['rescode'] = $xml->rescode;
             $data['respon']['hp'] = $xml->hp;
@@ -136,17 +142,15 @@ class PulsaController extends Controller
         $cashierID = "1";
         $serverSecretKey = "777888";
         $serverTrxID = $input['server_trxid'];
-        $partnerTrxID = "123456";
+        $partnerTrxID = $input['partner_trxid'];
         $lock = $channelID . $storeID . $posID;
         $date = date('YmdHis');
-        // $date = "20150616061436";
-        $param1 = $channelPIN . $serverSecretKey . $serverTrxID . $partnerTrxID;
+        // $param1 = $channelPIN . $serverSecretKey . $serverTrxID . $partnerTrxID;
+        $param1 = $channelPIN . $serverSecretKey . $serverTrxID;
         $param2 = $lock . $date;
         $md1 = md5($param1);
         $md2 = md5($param2);
         $signature = md5($md1 . $md2);
-
-//        die(var_dump($param1) . " " . var_dump($param2) . " " . var_dump($md1) . " " . var_dump($md2) . " " . var_dump($signature));
 
         $queryURL = $url 
                     . "channelid=" . $channelID 
@@ -156,8 +160,6 @@ class PulsaController extends Controller
                     . "&server_trxid=" . $serverTrxID
                     . "&storeid=" . $storeID
                     . "&cashierid=" . $cashierID;
-
-        // die(var_dump($queryURL));
 
         $ch = curl_init();
  
@@ -188,8 +190,6 @@ class PulsaController extends Controller
                     echo "<br>", $error->message;
                 }
             }
-
-            print_r($xml);
 
             $this->server_trxid = $xml->server_trxid;
 
